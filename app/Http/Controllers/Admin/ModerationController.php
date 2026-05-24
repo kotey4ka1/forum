@@ -19,7 +19,6 @@ class ModerationController extends Controller
 
         return view('admin.moderation.index', compact('complaints', 'supportRequests'));
     }
-
     // Принятие жалобы → удаляем пост или комментарий
     public function resolveComplaint(Request $request, Complaint $complaint)
     {

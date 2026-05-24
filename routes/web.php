@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminPostController;
 use App\Http\Controllers\Admin\AdminSectionController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\ModerationController;
+use App\Http\Controllers\Admin\KnowledgeBaseAdminController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\ForumController;
@@ -17,7 +18,6 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SupportRequestController;
 use App\Http\Controllers\KnowledgeBaseController;
-use App\Http\Controllers\Admin\KnowledgeBaseAdminController;
 
 Auth::routes();
 
@@ -30,11 +30,10 @@ Route::get('/ad/click/{materialId}', [AdController::class, 'click'])->name('ad.c
 Route::post('/ad/impression/{materialId}', [AdController::class, 'impression'])->name('ad.impression');
 Route::get('/faq', [KnowledgeBaseController::class, 'index'])->name('faq.index');
 Route::get('/faq/{knowledgeBase}', [KnowledgeBaseController::class, 'show'])->name('faq.show');
-// Поиск
 Route::get('/search', [SearchController::class, 'index'])->name('search.results');
 Route::get('/search/suggestions', [SearchController::class, 'suggest'])->name('search.suggestions');
 
-// Авторизованные
+// Авторизованные пользователи (все)
 Route::middleware(['auth'])->group(function () {
     Route::get('/section/{section}/post/create', [PostController::class, 'create'])->name('forum.post.create');
     Route::post('/section/{section}/post', [PostController::class, 'store'])->name('forum.post.store');
@@ -51,12 +50,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/post/{post}/edit', [PostController::class, 'edit'])->name('forum.post.edit');
     Route::put('/post/{post}', [PostController::class, 'update'])->name('forum.post.update');
     Route::delete('/post/{post}', [PostController::class, 'destroy'])->name('forum.post.destroy');
-    Route::post('/post/{id}/favorite', [PostController::class, 'toggleFavorite'])->name('post.favorite')->middleware('auth');
-    Route::get('/favorites', [PostController::class, 'favorites'])->name('favorites.index')->middleware('auth');
+    Route::post('/post/{id}/favorite', [PostController::class, 'toggleFavorite'])->name('post.favorite');
+    Route::get('/favorites', [PostController::class, 'favorites'])->name('favorites.index');
 });
 
-// Админ-панель
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+// Единая админ-панель для администраторов и модераторов
+Route::middleware(['auth', 'admin_or_moderator'])->prefix('admin')->name('admin.')->group(function () {
+    // Основные разделы (доступны всем, но в представлениях скрыты для модератора)
     Route::get('/', [AdminController::class, 'index'])->name('dashboard');
     Route::resource('users', AdminUserController::class);
     Route::resource('sections', AdminSectionController::class);
@@ -69,13 +69,16 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('comments/{comment}', [AdminCommentController::class, 'destroy'])->name('comments.destroy');
     Route::resource('ads', AdminAdController::class)->except(['show']);
     Route::get('ads/{ad}/stats', [AdminAdController::class, 'stats'])->name('ads.stats');
+    // Модерация (жалобы, обращения)
     Route::get('/moderation', [ModerationController::class, 'index'])->name('moderation.index');
-    Route::patch('/complaint/{complaint}/restore', [ModerationController::class, 'restoreComplaint'])->name('complaint.restore');
-    Route::patch('/post/{id}/restore', [PostController::class, 'restore'])->name('post.restore')->middleware('auth');
-    Route::patch('/comment/{id}/restore', [CommentController::class, 'restore'])->name('comment.restore')->middleware('auth');
     Route::patch('/complaint/{complaint}/resolve', [ModerationController::class, 'resolveComplaint'])->name('complaint.resolve');
     Route::patch('/complaint/{complaint}/reject', [ModerationController::class, 'rejectComplaint'])->name('complaint.reject');
+    Route::patch('/complaint/{complaint}/restore', [ModerationController::class, 'restoreComplaint'])->name('complaint.restore');
     Route::patch('/support/{supportRequest}/respond', [ModerationController::class, 'respondSupport'])->name('support.respond');
-    Route::resource('faq', KnowledgeBaseAdminController::class)->except(['show']);
 
+    // Управление FAQ (CRUD)
+    Route::resource('faq', KnowledgeBaseAdminController::class)->except(['show']);
+    // Восстановление контента (только для администраторов – проверка в контроллере)
+    Route::patch('/post/{id}/restore', [PostController::class, 'restore'])->name('post.restore');
+    Route::patch('/comment/{id}/restore', [CommentController::class, 'restore'])->name('comment.restore');
 });

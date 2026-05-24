@@ -23,8 +23,8 @@ class SupportRequestController extends Controller
     {
         $request->validate([
             'subject' => 'required|string|max:255',
-            'type' => 'required|in:payment,consultation,complaint,other',
-            'content' => 'required|string|min:10',
+            'type' => 'required|in:consultation,other',
+            'content' => 'required|string|min:5',
         ]);
 
         SupportRequest::create([
@@ -32,7 +32,7 @@ class SupportRequestController extends Controller
             'subject' => $request->subject,
             'type' => $request->type,
             'content' => $request->content,
-            'status' => 'new',
+            'status' => 'new', // если в таблице есть поле status
         ]);
 
         return redirect()->route('support.index')->with('success', 'Обращение отправлено');

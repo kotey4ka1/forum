@@ -1,19 +1,13 @@
 @extends('layouts.app')
-
 @section('content')
     <div class="container">
-        <h1>База знаний</h1>
-        <div class="row">
+        <h1>Часто задаваемые вопросы</h1>
+        <div class="list-group">
             @foreach($articles as $article)
-                <div class="col-md-6 mb-3">
-                    <div class="card">
-                        <div class="card-header">{{ $article->category }}</div>
-                        <div class="card-body">
-                            <h5><a href="{{ route('faq.show', $article) }}">{{ $article->question }}</a></h5>
-                            <p>{{ Str::limit($article->answer, 150) }}</p>
-                        </div>
-                    </div>
-                </div>
+                <a href="{{ route('faq.show', $article) }}" class="list-group-item list-group-item-action">
+                    <h5 class="mb-1">{{ $article->question }}</h5>
+                    <small class="text-muted">{{ $article->category }}</small>
+                </a>
             @endforeach
         </div>
         {{ $articles->links() }}

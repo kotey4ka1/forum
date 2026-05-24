@@ -46,13 +46,15 @@
                                 <a class="dropdown-item" href="{{ route('favorites.index') }}"><i class="bi bi-star me-2"></i>Избранное</a>
                                 <a class="dropdown-item" href="{{ route('support.index') }}"><i class="bi bi-envelope me-2"></i>Поддержка</a>
                                 <a class="dropdown-item" href="{{ route('faq.index') }}"><i class="bi bi-question-circle me-2"></i>FAQ</a>
-                                @if(Auth::user()->role && Auth::user()->role->name === 'admin')
-                                    <div class="dropdown-divider"></div>
+
+                                @if(Auth::user()->isModerator() || Auth::user()->isAdmin())
                                     <a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i class="bi bi-shield-lock me-2"></i>Админ-панель</a>
                                 @endif
+
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-danger" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="bi bi-box-arrow-right me-2"></i>Выйти</a>
                                 <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
+                            </div>
                             </div>
                         </li>
                     @endguest

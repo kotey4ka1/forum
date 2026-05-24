@@ -7,10 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class SupportRequest extends Model
 {
     protected $table = 'support_requests';
-    protected $fillable = [
-        'user_id', 'subject', 'type', 'content', 'status',
-        'assigned_moderator_id', 'response', 'responded_at', 'closed_at'
-    ];
+    protected $fillable = ['user_id', 'subject', 'type', 'content', 'status', 'response', 'assigned_moderator_id', 'responded_at', 'closed_at'];
 
     protected $casts = [
         'responded_at' => 'datetime',
