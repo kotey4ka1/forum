@@ -52,7 +52,11 @@
                                 <a href="{{ route('forum.post', $post->id) }}" class="h5 text-decoration-none fw-semibold">{{ $post->title }}</a>
                             </div>
                             <div class="small text-muted d-flex flex-wrap gap-3">
-                                <span><i class="bi bi-person"></i> {{ $post->user->name ?? 'Гость' }}</span>
+                                @if($post->user)
+                                    <a class="bi bi-person" href="{{ route('profile.show', $post->user->id) }}">{{ $post->user->name }}</a>
+                                @else
+                                    Гость
+                                @endif
                                 <span><i class="bi bi-chat"></i> Ответов: {{ $post->comments_count ?? $post->comments->count() }}</span>
                                 <span><i class="bi bi-heart"></i> Лайков: {{ $post->likes_count }}</span>
                                 <span><i class="bi bi-eye"></i> Просмотров: {{ $post->views_count }}</span>

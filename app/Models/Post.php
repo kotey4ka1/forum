@@ -3,10 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Post extends Model
 {
-    protected $fillable = ['user_id', 'forum_section_id', 'title', 'content', 'views_count', 'is_pinned', 'likes_count','is_hidden'];
+    use SoftDeletes;
+
+    protected $fillable = [
+        'user_id', 'forum_section_id', 'title', 'content',
+        'views_count', 'is_pinned', 'likes_count'
+    ];
+
+    protected $dates = ['deleted_at'];
 
     public function user()
     {
@@ -18,13 +26,11 @@ class Post extends Model
         return $this->belongsTo(ForumSection::class, 'forum_section_id');
     }
 
-    // Полиморфные комментарии к посту
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable');
     }
 
-    // Полиморфные лайки поста
     public function likes()
     {
         return $this->morphMany(Like::class, 'likeable');
@@ -33,10 +39,6 @@ class Post extends Model
     public function images()
     {
         return $this->hasMany(PostImage::class)->orderBy('sort_order');
-    }
-    public function scopeVisible($query)
-    {
-        return $query->where('is_hidden', false);
     }
 
     public function favoritedBy()

@@ -32,6 +32,12 @@
                             @csrf @method('PATCH')
                             <button class="btn btn-danger btn-sm">Отклонить</button>
                         </form>
+                        @if($complaint->status == 'reviewed' && $complaint->complaintable && $complaint->complaintable->trashed())
+                            <form method="POST" action="{{ route('admin.complaint.restore', $complaint) }}" class="d-inline-block mt-2">
+                                @csrf @method('PATCH')
+                                <button type="submit" class="btn btn-warning btn-sm">Восстановить контент</button>
+                            </form>
+                        @endif
                     </div>
                 </div>
             @empty

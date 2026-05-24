@@ -1,23 +1,23 @@
 <?php
 
-use App\Http\Controllers\ForumController;
-use App\Http\Controllers\PostController;
-use App\Http\Controllers\CommentController;
-use App\Http\Controllers\LikeController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdController;
+use App\Http\Controllers\Admin\AdminAdController;
+use App\Http\Controllers\Admin\AdminCommentController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminPostController;
+use App\Http\Controllers\Admin\AdminSectionController;
+use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\ModerationController;
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\ComplaintController;
+use App\Http\Controllers\ForumController;
+use App\Http\Controllers\LikeController;
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SupportRequestController;
 use App\Http\Controllers\KnowledgeBaseController;
-use App\Http\Controllers\ComplaintController;
-use App\Http\Controllers\SearchController;
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\AdminUserController;
-use App\Http\Controllers\Admin\AdminSectionController;
-use App\Http\Controllers\Admin\AdminPostController;
-use App\Http\Controllers\Admin\AdminCommentController;
-use App\Http\Controllers\Admin\AdminAdController;
-use App\Http\Controllers\Admin\ModerationController;
-
+use App\Http\Controllers\Admin\KnowledgeBaseAdminController;
 
 Auth::routes();
 
@@ -30,8 +30,9 @@ Route::get('/ad/click/{materialId}', [AdController::class, 'click'])->name('ad.c
 Route::post('/ad/impression/{materialId}', [AdController::class, 'impression'])->name('ad.impression');
 Route::get('/faq', [KnowledgeBaseController::class, 'index'])->name('faq.index');
 Route::get('/faq/{knowledgeBase}', [KnowledgeBaseController::class, 'show'])->name('faq.show');
-Route::get('/search', [SearchController::class, 'results'])->name('search.results');
-Route::get('/search/suggestions', [PostController::class, 'suggest'])->name('search.suggestions');
+// Поиск
+Route::get('/search', [SearchController::class, 'index'])->name('search.results');
+Route::get('/search/suggestions', [SearchController::class, 'suggest'])->name('search.suggestions');
 
 // Авторизованные
 Route::middleware(['auth'])->group(function () {
@@ -69,13 +70,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('ads', AdminAdController::class)->except(['show']);
     Route::get('ads/{ad}/stats', [AdminAdController::class, 'stats'])->name('ads.stats');
     Route::get('/moderation', [ModerationController::class, 'index'])->name('moderation.index');
+    Route::patch('/complaint/{complaint}/restore', [ModerationController::class, 'restoreComplaint'])->name('complaint.restore');
+    Route::patch('/post/{id}/restore', [PostController::class, 'restore'])->name('post.restore')->middleware('auth');
+    Route::patch('/comment/{id}/restore', [CommentController::class, 'restore'])->name('comment.restore')->middleware('auth');
     Route::patch('/complaint/{complaint}/resolve', [ModerationController::class, 'resolveComplaint'])->name('complaint.resolve');
     Route::patch('/complaint/{complaint}/reject', [ModerationController::class, 'rejectComplaint'])->name('complaint.reject');
     Route::patch('/support/{supportRequest}/respond', [ModerationController::class, 'respondSupport'])->name('support.respond');
-    Route::get('/moderation/faq', [ModerationController::class, 'faqIndex'])->name('moderation.faq');
-    Route::get('/moderation/faq/create', [ModerationController::class, 'faqCreate'])->name('moderation.faq.create');
-    Route::post('/moderation/faq', [ModerationController::class, 'faqStore'])->name('moderation.faq.store');
-    Route::get('/moderation/faq/{knowledgeBase}/edit', [ModerationController::class, 'faqEdit'])->name('moderation.faq.edit');
-    Route::put('/moderation/faq/{knowledgeBase}', [ModerationController::class, 'faqUpdate'])->name('moderation.faq.update');
-    Route::delete('/moderation/faq/{knowledgeBase}', [ModerationController::class, 'faqDestroy'])->name('moderation.faq.destroy');
+    Route::resource('faq', KnowledgeBaseAdminController::class)->except(['show']);
+
 });

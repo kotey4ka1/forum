@@ -8,7 +8,13 @@
 
         <h1 class="mb-3">{{ $post->title }}</h1>
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 text-muted">
-            <div><i class="bi bi-person"></i> {{ $post->user->name ?? 'Гость' }}</div>
+            <div><i class="bi bi-person"></i>
+                @if($post->user)
+                    <a href="{{ route('profile.show', $post->user->id) }}">{{ $post->user->name }}</a>
+                @else
+                    Гость
+                @endif
+            </div>
             <div><i class="bi bi-eye"></i> {{ $post->views_count }} просмотров</div>
             <div><i class="bi bi-calendar3"></i> {{ $post->created_at->format('d.m.Y H:i') }}</div>
         </div>
@@ -53,7 +59,8 @@
                         <button class="btn btn-outline-danger btn-sm rounded-pill">Удалить пост</button>
                     </form>
                 @endif
-                <button class="btn btn-outline-warning btn-sm rounded-pill complaint-btn" data-type="post" data-id="{{ $post->id }}">Пожаловаться</button>
+                <!-- Кнопка жалобы с атрибутами для Bootstrap -->
+                <button class="btn btn-outline-warning btn-sm rounded-pill complaint-btn" data-type="post" data-id="{{ $post->id }}" data-bs-toggle="modal" data-bs-target="#complaintModal">Пожаловаться</button>
             @else
                 <a href="{{ route('login') }}" class="btn btn-outline-danger btn-sm rounded-pill">❤️ {{ $post->likes_count ?? 0 }}</a>
             @endauth
@@ -84,7 +91,30 @@
         @endauth
     </div>
 
+    <!-- Модальное окно для жалобы -->
+    <div class="modal fade" id="complaintModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="POST" action="{{ route('complaint.store') }}" class="modal-content">
+                @csrf
+                <input type="hidden" name="complaintable_id" id="complaint-id">
+                <input type="hidden" name="complaintable_type" id="complaint-type">
+                <div class="modal-header">
+                    <h5 class="modal-title">Пожаловаться</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea name="reason" class="form-control" rows="3" required placeholder="Укажите причину жалобы..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger">Отправить</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        // 1. Лайки (AJAX)
         document.querySelectorAll('.like-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -92,7 +122,10 @@
                 const id = this.dataset.id;
                 fetch('{{ route("like.toggle") }}', {
                     method: 'POST',
-                    headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}','Content-Type': 'application/json'},
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({ type: type, id: id })
                 })
                     .then(response => response.json())
@@ -100,13 +133,58 @@
                         this.classList.toggle('btn-outline-danger');
                         this.classList.toggle('btn-danger');
                         this.querySelector('.likes-count').innerText = data.likesCount;
-                    });
+                    })
+                    .catch(error => console.error('Ошибка лайка:', error));
             });
         });
-        // кнопка жалобы (как ранее)
+
+        // 2. Показать/скрыть форму ответа
+        document.querySelectorAll('.reply-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const commentId = this.dataset.commentId;
+                const form = document.getElementById('reply-form-' + commentId);
+                if (form.style.display === 'none') {
+                    form.style.display = 'block';
+                    const textarea = form.querySelector('textarea');
+                    if (textarea && !textarea.value.startsWith('@' + this.dataset.username)) {
+                        textarea.value = '@' + this.dataset.username + ', ';
+                    }
+                } else {
+                    form.style.display = 'none';
+                }
+            });
+        });
+
+        // 3. Отмена ответа
+        document.querySelectorAll('.cancel-reply').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.reply-form').style.display = 'none';
+            });
+        });
+
+        // 4. Редактирование комментария (inline-форма)
+        document.querySelectorAll('.edit-comment-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const commentId = this.dataset.id;
+                const wrapper = document.getElementById('comment-content-' + commentId);
+                if (wrapper.querySelector('form')) return;
+                const response = await fetch(`/comment/${commentId}/edit`);
+                const html = await response.text();
+                wrapper.innerHTML = html;
+                const cancelBtn = wrapper.querySelector('.cancel-edit');
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => {
+                        window.location.reload();
+                    });
+                }
+            });
+        });
+
+        // 5. Жалобы – только заполнение скрытых полей, модалка откроется автоматически
         document.querySelectorAll('.complaint-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                // аналогично – открытие модального окна
+                document.getElementById('complaint-id').value = this.dataset.id;
+                document.getElementById('complaint-type').value = this.dataset.type;
             });
         });
     </script>

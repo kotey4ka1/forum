@@ -3,7 +3,29 @@
 @section('content')
     <div class="container">
         <h1 class="mb-4">Результаты поиска по запросу: "{{ $query }}"</h1>
+
+        {{-- Разделы --}}
+        @if($sections->count())
+            <div class="mb-5">
+                <h3>Разделы форума</h3>
+                <div class="row">
+                    @foreach($sections as $section)
+                        <div class="col-md-6 mb-3">
+                            <div class="card shadow-sm border-0 rounded-3">
+                                <div class="card-body">
+                                    <h5><a href="{{ route('forum.section', $section->id) }}" class="text-decoration-none">{{ $section->name }}</a></h5>
+                                    <p class="text-muted mb-0">{{ Str::limit($section->description, 100) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        {{-- Посты --}}
         @if($posts->count())
+            <h3>Посты</h3>
             <div class="row">
                 @foreach($posts as $post)
                     <div class="col-12 mb-3">
@@ -38,7 +60,9 @@
                 @endforeach
             </div>
             {{ $posts->links() }}
-        @else
+        @endif
+
+        @if($posts->count() == 0 && $sections->count() == 0)
             <div class="alert alert-info">По вашему запросу ничего не найдено.</div>
         @endif
     </div>

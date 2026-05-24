@@ -5,10 +5,11 @@ use App\Models\Like;
 use App\Models\Post;
 use App\Models\ForumSection;
 use App\Models\PostImage;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Comment;
-
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 class PostController extends Controller
@@ -36,11 +37,9 @@ class PostController extends Controller
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                // Генерируем уникальное имя
-                $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                // Сохраняем в storage/app/public/post_images
-                $path = $image->storeAs('post_images', $filename, 'public');
-                // В базу пишем относительный путь (например, post_images/filename.jpg)
+                // Сохраняем в папку storage/app/public/post_images
+                $path = $image->store('post_images', 'public');
+                // $path будет, например, "post_images/filename.jpg"
                 PostImage::create([
                     'post_id' => $post->id,
                     'image_url' => $path,
@@ -87,11 +86,40 @@ class PostController extends Controller
         if (auth()->id() !== $post->user_id && !auth()->user()->isAdmin() && !auth()->user()->isModerator()) {
             abort(403);
         }
+
         $request->validate([
             'title' => 'required|max:255',
             'content' => 'required|min:10',
+            'new_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:4096',
+            'new_images' => 'max:5',
+            'delete_images' => 'array',
+            'delete_images.*' => 'exists:post_images,id',
         ]);
+
+        // Обновляем заголовок и текст
         $post->update($request->only('title', 'content'));
+
+        // Удаляем отмеченные изображения
+        if ($request->filled('delete_images')) {
+            $imagesToDelete = \App\Models\PostImage::whereIn('id', $request->delete_images)->get();
+            foreach ($imagesToDelete as $image) {
+                \Storage::disk('public')->delete($image->image_url);
+                $image->delete();
+            }
+        }
+
+        // Добавляем новые изображения
+        if ($request->hasFile('new_images')) {
+            foreach ($request->file('new_images') as $image) {
+                $path = $image->store('post_images', 'public');
+                \App\Models\PostImage::create([
+                    'post_id' => $post->id,
+                    'image_url' => $path,
+                    'sort_order' => 0,
+                ]);
+            }
+        }
+
         return redirect()->route('forum.post', $post->id)->with('success', 'Пост обновлён');
     }
 
@@ -121,19 +149,17 @@ class PostController extends Controller
         $posts = auth()->user()->favorites()->paginate(10);
         return view('forum.favorites', compact('posts'));
     }
-
-    public function suggest(Request $request)
+    public function restore($id)
     {
-        $query = $request->get('q');
-        if (strlen($query) < 2) {
-            return response()->json([]);
+        $post = Post::withTrashed()->findOrFail($id);
+        if (!auth()->user()->isAdmin() && !auth()->user()->isModerator()) {
+            abort(403);
         }
-        // Подсказки из заголовков постов
-        $suggestions = Post::where('title', 'like', '%' . $query . '%')
-            ->limit(10)
-            ->pluck('title');
-        return response()->json($suggestions);
+        $post->restore();
+        return redirect()->back()->with('success', 'Пост восстановлен.');
     }
+
+
 
 
 }

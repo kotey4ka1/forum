@@ -11,7 +11,13 @@
 
         <div class="d-flex justify-content-between align-items-start flex-wrap">
             <div>
-                <strong class="me-2">{{ $comment->user->name ?? 'Гость' }}</strong>
+                <strong>
+                    @if($comment->user)
+                        <a href="{{ route('profile.show', $comment->user->id) }}">{{ $comment->user->name }}</a>
+                    @else
+                        Гость
+                    @endif
+                </strong>
                 <small class="text-muted">{{ $comment->created_at->diffForHumans() }}</small>
             </div>
             <div class="btn-group btn-group-sm" role="group">
@@ -36,7 +42,8 @@
                     @endif
                     <!-- Кнопка жалобы на комментарий -->
                     <button class="btn btn-link text-warning text-decoration-none complaint-btn"
-                            data-type="comment" data-id="{{ $comment->id }}">
+                            data-type="comment" data-id="{{ $comment->id }}"
+                            data-bs-toggle="modal" data-bs-target="#complaintModal">
                         Пожаловаться
                     </button>
                 @endauth

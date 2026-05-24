@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
 use App\Models\SupportRequest;
+use App\Models\KnowledgeBase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
 
 class ModerationController extends Controller
 {
@@ -68,4 +70,15 @@ class ModerationController extends Controller
 
         return back()->with('success', 'Ответ отправлен');
     }
+
+    // Восстановление контента после жалобы
+    public function restoreComplaint(Complaint $complaint)
+    {
+        $complaintable = $complaint->complaintable;
+        if ($complaintable && $complaintable->trashed()) {
+            $complaintable->restore();
+        }
+        return back()->with('success', 'Контент восстановлен.');
+    }
+
 }

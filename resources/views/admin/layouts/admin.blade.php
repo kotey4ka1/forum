@@ -25,6 +25,7 @@
                     <li class="nav-item"><a class="nav-link" href="{{ route('admin.comments.index') }}"><i class="bi bi-chat-dots me-1"></i>Комментарии</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('admin.ads.index') }}"><i class="bi bi-megaphone me-1"></i>Реклама</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('admin.moderation.index') }}"><i class="bi bi-shield-shaded me-1"></i>Модерация</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('admin.faq.index') }}"><i class="bi bi-question-circle me-2"></i>FAQ</a></li>
                 </ul>
                 <a href="{{ url('/') }}" class="btn btn-outline-light btn-sm">На сайт</a>
             </div>

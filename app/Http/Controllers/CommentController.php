@@ -57,14 +57,25 @@ class CommentController extends Controller
         return redirect()->back()->with('success', 'Комментарий обновлён');
     }
 
-    // Удаление комментария
+    // Мягкое удаление комментария
     public function destroy($id)
     {
         $comment = Comment::findOrFail($id);
         if (Auth::id() !== $comment->user_id && !Auth::user()->isModerator() && !Auth::user()->isAdmin()) {
             abort(403);
         }
-        $comment->delete();
+        $comment->delete(); // заполнится deleted_at
         return redirect()->back()->with('success', 'Комментарий удалён');
+    }
+
+    // Восстановление комментария (если нужно)
+    public function restore($id)
+    {
+        $comment = Comment::withTrashed()->findOrFail($id);
+        if (Auth::user()->isAdmin() || Auth::user()->isModerator()) {
+            $comment->restore();
+            return redirect()->back()->with('success', 'Комментарий восстановлен');
+        }
+        abort(403);
     }
 }
