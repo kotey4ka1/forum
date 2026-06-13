@@ -10,10 +10,11 @@ use Illuminate\Support\Facades\Auth;
 
 class SearchController extends Controller
 {
+
     public function index(Request $request)
     {
         $query = $request->input('q');
-        if (empty($query) || strlen($query) < 2) {
+        if (strlen($query) < 2) {
             return redirect()->route('home');
         }
 
@@ -21,14 +22,15 @@ class SearchController extends Controller
         SearchQuery::create([
             'user_id' => Auth::id(),
             'query' => $query,
-            'results_count' => 0, // временно
+            'results_count' => 0,
         ]);
 
         // Поиск постов
-        $posts = Post::where('title', 'like', '%' . $query . '%')
+        $posts = Post::with(['user', 'section'])
+            ->where('title', 'like', '%' . $query . '%')
             ->orWhere('content', 'like', '%' . $query . '%')
             ->orderBy('created_at', 'desc')
-            ->paginate(15)
+            ->paginate(10)
             ->appends(['q' => $query]);
 
         // Поиск разделов
@@ -36,13 +38,10 @@ class SearchController extends Controller
             ->orWhere('description', 'like', '%' . $query . '%')
             ->get();
 
-        // Обновим количество результатов для последнего запроса
-        $totalResults = $posts->total() + $sections->count();
-        SearchQuery::where('user_id', Auth::id())->latest()->first()->update(['results_count' => $totalResults]);
-
-        return view('search.results', compact('posts', 'sections', 'query'));
+        return view('search.results', compact('query', 'posts', 'sections'));
     }
 
+    // Автодополнение (подсказки)
     public function suggestions(Request $request)
     {
         $q = $request->input('q');
@@ -50,26 +49,28 @@ class SearchController extends Controller
             return response()->json([]);
         }
 
-        // Популярные запросы из таблицы search_queries
-        $popular = SearchQuery::select('query')
-            ->where('query', 'like', $q . '%')
-            ->groupBy('query')
-            ->orderByRaw('COUNT(*) DESC')
+        $postSuggestions = Post::where('title', 'like', "%{$q}%")
             ->limit(5)
-            ->pluck('query');
+            ->get()
+            ->map(fn($post) => [
+                'type' => 'post',
+                'title' => $post->title,
+                'link' => route('forum.post', $post->id),
+                'snippet' => null,
+            ]);
 
-        // Заголовки постов
-        $titles = Post::where('title', 'like', '%' . $q . '%')
-            ->limit(10)
-            ->pluck('title');
-
-        // Названия разделов
-        $sectionNames = ForumSection::where('name', 'like', '%' . $q . '%')
+        $sectionSuggestions = ForumSection::where('name', 'like', "%{$q}%")
             ->limit(5)
-            ->pluck('name');
+            ->get()
+            ->map(fn($section) => [
+                'type' => 'section',
+                'title' => $section->name,
+                'link' => route('forum.section', $section->id),
+                'snippet' => $section->description,
+            ]);
 
-        $suggestions = $popular->merge($titles)->merge($sectionNames)->unique()->take(10)->values();
+        $suggestions = collect($postSuggestions)->merge($sectionSuggestions)->take(10)->values();
 
-        return response()->json($suggestions);
+        return response()->json(['suggestions' => $suggestions]);
     }
 }

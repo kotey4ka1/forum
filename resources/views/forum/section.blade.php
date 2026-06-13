@@ -10,7 +10,7 @@
         </div>
         <p class="text-muted">{{ $section->description }}</p>
 
-        <!-- Форма фильтрации и сортировки -->
+        <!-- Фильтрация и сортировка -->
         <form method="GET" action="{{ route('forum.section', $section->id) }}" class="row g-2 mb-3 align-items-end">
             <div class="col-auto">
                 <label class="form-label">Сортировать по</label>
@@ -41,44 +41,69 @@
         </form>
 
         @if($posts->count())
-            <div class="list-group shadow-sm">
-                @foreach($posts as $post)
-                    <div class="list-group-item list-group-item-action d-flex flex-column flex-md-row justify-content-between align-items-md-center p-3 mb-2 rounded-3">
-                        <div class="flex-grow-1">
-                            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                                @if($post->is_pinned)
-                                    <span class="badge bg-warning text-dark">📌 Закреплено</span>
-                                @endif
-                                <a href="{{ route('forum.post', $post->id) }}" class="h5 text-decoration-none fw-semibold">{{ $post->title }}</a>
+            <div class="row">
+                @foreach($posts as $index => $post)
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm border-0 rounded-3">
+                            <!-- Изображение (если есть) -->
+                            @php
+                                $firstImage = $post->images->first();
+                            @endphp
+                            @if($firstImage)
+                                <a href="{{ route('forum.post', $post->id) }}" class="text-decoration-none d-flex align-items-center justify-content-center" style="height: 250px; background-color: #f8f9fa;">
+                                    <img src="{{ asset('storage/app/public/' . $firstImage->image_url) }}"
+                                         class="img-fluid"
+                                         style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                </a>
+                            @else
+                                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
+                                    <i class="bi bi-image fs-1 text-muted"></i>
+                                </div>
+                            @endif
+
+                            <div class="card-body">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <a href="{{ route('forum.post', $post->id) }}" class="h5 text-decoration-none fw-semibold stretched-link">{{ $post->title }}</a>
+                                </div>
+                                <div class="small text-muted mb-2">
+                                    <span><i class="bi bi-person"></i> {{ $post->user->name ?? 'Гость' }}</span>
+                                    <span class="mx-2">•</span>
+                                    <span><i class="bi bi-clock"></i> {{ $post->updated_at->diffForHumans() }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <div class="small text-muted">
+                                        <span class="me-2"><i class="bi bi-chat"></i> {{ $post->comments_count ?? $post->comments->count() }}</span>
+                                        <span class="me-2"><i class="bi bi-heart"></i> {{ $post->likes_count }}</span>
+                                        <span><i class="bi bi-eye"></i> {{ $post->views_count }}</span>
+                                        @if($post->is_pinned)
+                                            <span class="badge bg-warning text-dark">📌 Закреплено</span>
+                                        @endif
+                                    </div>
+                                    @auth
+                                        @php $isFav = auth()->user()->favorites()->where('post_id', $post->id)->exists(); @endphp
+                                        <form action="{{ route('post.favorite', $post->id) }}" method="POST" class="m-0">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm {{ $isFav ? 'btn-warning' : 'btn-outline-warning' }} rounded-pill">
+                                                <i class="bi bi-star-fill"></i>
+                                            </button>
+                                        </form>
+                                    @endauth
+                                </div>
                             </div>
-                            <div class="small text-muted d-flex flex-wrap gap-3">
-                                @if($post->user)
-                                    <a class="bi bi-person" href="{{ route('profile.show', $post->user->id) }}">{{ $post->user->name }}</a>
-                                @else
-                                    Гость
-                                @endif
-                                <span><i class="bi bi-chat"></i> Ответов: {{ $post->comments_count ?? $post->comments->count() }}</span>
-                                <span><i class="bi bi-heart"></i> Лайков: {{ $post->likes_count }}</span>
-                                <span><i class="bi bi-eye"></i> Просмотров: {{ $post->views_count }}</span>
-                            </div>
-                        </div>
-                        <div class="text-md-end mt-2 mt-md-0">
-                            <small class="text-muted"><i class="bi bi-clock"></i> {{ $post->updated_at->diffForHumans() }}</small>
-                            @auth
-                                @php $isFav = auth()->user()->favorites()->where('post_id', $post->id)->exists(); @endphp
-                                <form action="{{ route('post.favorite', $post->id) }}" method="POST" class="mt-2">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm {{ $isFav ? 'btn-warning' : 'btn-outline-warning' }} rounded-pill">
-                                        <i class="bi bi-star-fill"></i> {{ $isFav ? 'В избранном' : 'В избранное' }}
-                                    </button>
-                                </form>
-                            @endauth
                         </div>
                     </div>
+
+                    {{-- Реклама между постами: после каждого 5-го поста (кроме последнего) --}}
+                    @if(($index + 1) % 3 == 0 && !$loop->last)
+                        <div class="col-12">
+                            @include('partials.ad-between-posts')
+                        </div>
+                    @endif
                 @endforeach
             </div>
+
             <div class="d-flex justify-content-center mt-4">
-                {{ $posts->links() }}
+                {{ $posts->appends(request()->query())->links('pagination::bootstrap-5') }}
             </div>
         @else
             <div class="alert alert-info text-center py-5">

@@ -5,16 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ForumSection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AdminSectionController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $query = ForumSection::query();
-        if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
-        }
-        $sections = $query->orderBy('id')->paginate(15);
+        $sections = ForumSection::orderBy('id')->paginate(15);
         return view('admin.sections.index', compact('sections'));
     }
 
@@ -26,10 +23,19 @@ class AdminSectionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:100|unique:forum_sections,name',
+            'name' => 'required|max:100|unique:forum_sections,name',
             'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-        ForumSection::create($request->all());
+
+        $data = $request->only('name', 'description');
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('section_images', 'public');
+            $data['image_url'] = $path;
+        }
+
+        ForumSection::create($data);
         return redirect()->route('admin.sections.index')->with('success', 'Раздел создан');
     }
 
@@ -41,17 +47,29 @@ class AdminSectionController extends Controller
     public function update(Request $request, ForumSection $section)
     {
         $request->validate([
-            'name' => 'required|string|max:100|unique:forum_sections,name,' . $section->id,
+            'name' => 'required|max:100|unique:forum_sections,name,' . $section->id,
             'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-        $section->update($request->all());
+
+        $data = $request->only('name', 'description');
+
+        if ($request->hasFile('image')) {
+            if ($section->image_url && Storage::disk('public')->exists($section->image_url)) {
+                Storage::disk('public')->delete($section->image_url);
+            }
+            $path = $request->file('image')->store('section_images', 'public');
+            $data['image_url'] = $path;
+        }
+
+        $section->update($data);
         return redirect()->route('admin.sections.index')->with('success', 'Раздел обновлён');
     }
 
     public function destroy(ForumSection $section)
     {
-        if ($section->posts()->count()) {
-            return back()->with('error', 'В разделе есть посты, сначала удалите их.');
+        if ($section->image_url && Storage::disk('public')->exists($section->image_url)) {
+            Storage::disk('public')->delete($section->image_url);
         }
         $section->delete();
         return back()->with('success', 'Раздел удалён');

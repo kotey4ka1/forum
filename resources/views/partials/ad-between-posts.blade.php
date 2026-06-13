@@ -17,12 +17,17 @@
     }
 @endphp
 @if($chosen)
-    <div class="card my-4 border-0 bg-light" data-material-id="{{ $chosen->id }}">
-        <div class="card-body p-2 text-center">
-            <a href="{{ route('ad.click', $chosen->id) }}" target="_blank">
-                <img src="{{ asset('storage/app/public/' . $chosen->content) }}" class="img-fluid rounded" style="max-width: 100%; max-height: 150px;">
-            </a>
-        </div>
+    <div class="ad-between-container w-100 overflow-hidden" style="height: 300px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;" data-material-id="{{ $chosen->id }}">
+        <a href="{{ route('ad.click', $chosen->id) }}" target="_blank" class="d-block w-100 h-100 d-flex align-items-center justify-content-center">
+            @if($chosen->type == 'banner')
+                <img src="{{ asset('storage/app/public/' . $chosen->content) }}"
+                     style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block;">
+            @else
+                <div class="video-container w-100 h-100 d-flex align-items-center justify-content-center">
+                    {!! $chosen->content !!}
+                </div>
+            @endif
+        </a>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {

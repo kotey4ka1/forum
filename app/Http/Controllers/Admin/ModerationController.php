@@ -12,10 +12,51 @@ use Illuminate\Support\Facades\Auth;
 
 class ModerationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $complaints = Complaint::with(['user', 'complaintable'])->orderBy('created_at', 'desc')->paginate(10);
-        $supportRequests = SupportRequest::with('user')->orderBy('created_at', 'desc')->paginate(10);
+        $complaintsQuery = Complaint::with(['user', 'complaintable']);
+        $supportQuery = SupportRequest::with('user');
+
+        // Фильтры для жалоб
+        if ($request->filled('complaint_status')) {
+            $complaintsQuery->where('status', $request->complaint_status);
+        }
+        if ($request->filled('complaint_date')) {
+            if ($request->complaint_date == 'today') {
+                $complaintsQuery->whereDate('created_at', today());
+            } elseif ($request->complaint_date == 'week') {
+                $complaintsQuery->where('created_at', '>=', now()->subDays(7));
+            } elseif ($request->complaint_date == 'month') {
+                $complaintsQuery->where('created_at', '>=', now()->subMonth());
+            }
+        }
+        if ($request->filled('complaint_search')) {
+            $search = $request->complaint_search;
+            $complaintsQuery->where(function ($q) use ($search) {
+                $q->where('reason', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Фильтры для обращений
+        if ($request->filled('support_status')) {
+            $supportQuery->where('status', $request->support_status);
+        }
+        if ($request->filled('support_search')) {
+            $search = $request->support_search;
+            $supportQuery->where(function ($q) use ($search) {
+                $q->where('subject', 'like', "%{$search}%")
+                    ->orWhere('content', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $complaints = $complaintsQuery->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
+        $supportRequests = $supportQuery->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
 
         return view('admin.moderation.index', compact('complaints', 'supportRequests'));
     }

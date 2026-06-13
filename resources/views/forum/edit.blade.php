@@ -28,7 +28,7 @@
                                     <div class="row">
                                         @foreach($post->images as $image)
                                             <div class="col-md-3 mb-2 position-relative">
-                                                <img src="{{ asset('storage/' . $image->image_url) }}" class="img-thumbnail w-100" style="height: 100px; object-fit: cover;">
+                                                <img src="{{ asset('storage/app/public/' . $image->image_url) }}" class="img-thumbnail w-100" style="height: 100px; object-fit: cover;">
                                                 <div class="form-check mt-1">
                                                     <input class="form-check-input" type="checkbox" name="delete_images[]" value="{{ $image->id }}">
                                                     <label class="form-check-label">Удалить</label>

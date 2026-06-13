@@ -38,14 +38,13 @@ class SupportRequestController extends Controller
         return redirect()->route('support.index')->with('success', 'Обращение отправлено');
     }
 
-    public function show(SupportRequest $supportRequest)
+    public function show(SupportRequest $support)
     {
-        if ($supportRequest->user_id != Auth::id() && !Auth::user()->isAdmin() && !Auth::user()->isModerator()) {
+        if ($support->user_id != Auth::id() && !Auth::user()->isAdmin() && !Auth::user()->isModerator()) {
             abort(403);
         }
-        return view('support.show', compact('supportRequest'));
+        return view('support.show', compact('support'));
     }
-
     public function destroy(SupportRequest $supportRequest)
     {
         if ($supportRequest->user_id != Auth::id() && !Auth::user()->isAdmin()) {

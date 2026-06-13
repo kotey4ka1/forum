@@ -59,7 +59,9 @@
                     </div>
                 @endforeach
             </div>
-            {{ $posts->links() }}
+            <div class="d-flex justify-content-center mt-4">
+                {{ $posts->appends(request()->query())->links('pagination::bootstrap-5') }}
+            </div>
         @endif
 
         @if($posts->count() == 0 && $sections->count() == 0)

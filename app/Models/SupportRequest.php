@@ -23,4 +23,23 @@ class SupportRequest extends Model
     {
         return $this->belongsTo(User::class, 'assigned_moderator_id');
     }
+
+    public function getTypeNameAttribute()
+    {
+        return [
+            'payment' => 'Оплата',
+            'consultation' => 'Консультация',
+            'complaint' => 'Жалоба',
+            'other' => 'Другое',
+        ][$this->type] ?? $this->type;
+    }
+
+    public function getStatusNameAttribute()
+    {
+        return [
+            'new' => 'Новое',
+            'in_progress' => 'В работе',
+            'closed' => 'Закрыто',
+        ][$this->status] ?? $this->status;
+    }
 }

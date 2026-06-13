@@ -4,22 +4,23 @@
     <div class="container">
         <div class="card shadow-sm">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Обращение #{{ $supportRequest->id }}</h5>
-                @if(auth()->id() == $supportRequest->user_id || auth()->user()->isAdmin())
-                    <form action="{{ route('support.destroy', $supportRequest->id) }}" method="POST" onsubmit="return confirm('Удалить обращение?')">
+                <h5 class="mb-0">Обращение #{{ $support->id }}</h5>
+                @if(auth()->id() == $support->user_id || auth()->user()->isAdmin())
+                    <form action="{{ route('support.destroy', $support) }}" method="POST">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                        <button type="submit">Удалить</button>
                     </form>
                 @endif
             </div>
             <div class="card-body">
-                <div class="mb-3"><strong>Тема:</strong> {{ $supportRequest->subject }}</div>
-                <div class="mb-3"><strong>Тип:</strong> {{ $supportRequest->type }}</div>
-                <div class="mb-3"><strong>Статус:</strong> <span class="badge bg-secondary">{{ $supportRequest->status }}</span></div>
-                <div class="mb-3"><strong>Сообщение:</strong><br>{{ $supportRequest->content }}</div>
-                @if($supportRequest->response)
-                    <hr><div class="mb-3"><strong>Ответ администратора:</strong><br>{{ $supportRequest->response }}</div>
+                <div class="mb-3"><strong>Тема:</strong> {{ $support->subject }}</div>
+                <div class="mb-3"><strong>Тип:</strong> {{ $support->type_name }}</div>
+                <div class="mb-3"><strong>Статус:</strong> <span class="badge bg-secondary">{{ $support->status_name }}</span></div>
+                <div class="mb-3"><strong>Сообщение:</strong><br>{{ $support->content }}</div>
+                @if($support->response)
+                    <hr>
+                    <div class="mb-3"><strong>Ответ администратора:</strong><br>{{ $support->response }}</div>
                 @endif
             </div>
             <div class="card-footer bg-white">

@@ -97,7 +97,126 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // ваш скрипт для поиска (без изменений)
+    (function() {
+        const input = document.querySelector('input[name="q"]');
+        const box = document.querySelector('.suggestions-box');
+        if (!input || !box) return;
+
+        let timer;
+        const historyKey = 'forum_search_history';
+        const maxHistory = 10;
+
+        // Получить историю из localStorage
+        function getHistory() {
+            const raw = localStorage.getItem(historyKey);
+            return raw ? JSON.parse(raw) : [];
+        }
+
+        // Добавить запрос в историю
+        function addHistory(q) {
+            if (!q.trim()) return;
+            let h = getHistory();
+            h = h.filter(item => item !== q);
+            h.unshift(q);
+            if (h.length > maxHistory) h.pop();
+            localStorage.setItem(historyKey, JSON.stringify(h));
+        }
+
+        // Показать подсказки (история или AJAX)
+        function showSuggestions(items, isHistory = false) {
+            if (!items.length) {
+                box.style.display = 'none';
+                return;
+            }
+            box.innerHTML = '';
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item p-2 border-bottom';
+                div.style.cursor = 'pointer';
+                if (isHistory) {
+                    div.innerHTML = `<i class="bi bi-clock-history me-2"></i> ${escapeHtml(item)}`;
+                    div.addEventListener('click', () => {
+                        input.value = item;
+                        addHistory(item);
+                        input.closest('form').submit();
+                    });
+                } else {
+                    const icon = item.type === 'section' ? 'bi-folder' : 'bi-chat-text';
+                    div.innerHTML = `
+                        <div class="d-flex align-items-start">
+                            <i class="bi ${icon} me-2 mt-1"></i>
+                            <div>
+                                <div class="fw-semibold">${escapeHtml(item.title)}</div>
+                                ${item.snippet ? `<small class="text-muted">${escapeHtml(item.snippet)}</small>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    div.addEventListener('click', () => {
+                        window.location.href = item.link;
+                    });
+                }
+                box.appendChild(div);
+            });
+            box.style.display = 'block';
+        }
+
+        // Запрос к серверу для подсказок
+        async function fetchSuggestions(q) {
+            if (!q.trim()) {
+                const history = getHistory().slice(0, 5);
+                if (history.length) showSuggestions(history, true);
+                else box.style.display = 'none';
+                return;
+            }
+            try {
+                const resp = await fetch(`/search/suggestions?q=${encodeURIComponent(q)}`);
+                if (!resp.ok) throw new Error();
+                const data = await resp.json();
+                if (data.suggestions && data.suggestions.length) {
+                    showSuggestions(data.suggestions, false);
+                } else {
+                    box.innerHTML = '<div class="p-2 text-muted">Ничего не найдено</div>';
+                    box.style.display = 'block';
+                }
+            } catch(e) {
+                box.style.display = 'none';
+            }
+        }
+
+        // Обработчики
+        input.addEventListener('input', function() {
+            clearTimeout(timer);
+            const val = this.value;
+            if (val.length >= 2) {
+                timer = setTimeout(() => fetchSuggestions(val), 300);
+            } else {
+                timer = setTimeout(() => fetchSuggestions(''), 100);
+            }
+        });
+
+        input.addEventListener('focus', () => fetchSuggestions(input.value));
+
+        document.addEventListener('click', (e) => {
+            if (!box.contains(e.target) && e.target !== input) {
+                box.style.display = 'none';
+            }
+        });
+
+        const form = input.closest('form');
+        if (form) {
+            form.addEventListener('submit', () => addHistory(input.value));
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+    })();
 </script>
 </body>
 </html>

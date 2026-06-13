@@ -17,13 +17,11 @@
     }
 @endphp
 @if($chosen)
-    <div class="card mb-4 border-0 shadow-sm" data-material-id="{{ $chosen->id }}">
-        <div class="card-body p-3 text-center">
-            <a href="{{ route('ad.click', $chosen->id) }}" target="_blank">
-                <img src="{{ asset('storage/app/public/' . $chosen->content) }}" class="img-fluid rounded" style="max-width: 100%; max-height: auto;">
-            </a>
-            <div class="small text-muted mt-2">Реклама</div>
-        </div>
+    <div class="ad-sidebar-container" style="max-height: 300px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; padding: 10px;">
+        <a href="{{ route('ad.click', $chosen->id) }}" target="_blank" style="display: block; max-width: 100%; max-height: 100%;">
+            <img src="{{ asset('storage/app/public/' . $chosen->content) }}"
+                 style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block;">
+        </a>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {

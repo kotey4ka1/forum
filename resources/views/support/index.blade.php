@@ -11,7 +11,7 @@
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between">
                     <strong>{{ $req->subject }}</strong>
-                    <span class="badge bg-secondary">{{ $req->status }}</span>
+                    <span class="badge bg-secondary">{{ $req->status_name }}</span>
                 </div>
                 <div class="card-body">
                     <p>{{ Str::limit($req->content, 200) }}</p>

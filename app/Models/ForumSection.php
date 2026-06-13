@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ForumSection extends Model
 {
     protected $table = 'forum_sections';
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['name', 'description', 'image_url'];  // ← добавили image_url
 
     public function posts()
     {

@@ -7,12 +7,58 @@
     </ul>
 
     <div class="tab-content">
-        {{-- Жалобы --}}
         <div class="tab-pane fade show active" id="complaints">
+            {{-- Форма фильтрации для жалоб --}}
+            <form method="GET" action="{{ route('admin.moderation.index') }}" class="row g-2 mb-3 align-items-end">
+                <input type="hidden" name="tab" value="complaints">
+                <div class="col-md-3">
+                    <label class="form-label">Статус</label>
+                    <select name="complaint_status" class="form-select">
+                        <option value="">Все</option>
+                        <option value="pending" {{ request('complaint_status') == 'pending' ? 'selected' : '' }}>На рассмотрении</option>
+                        <option value="reviewed" {{ request('complaint_status') == 'reviewed' ? 'selected' : '' }}>Принята</option>
+                        <option value="rejected" {{ request('complaint_status') == 'rejected' ? 'selected' : '' }}>Отклонена</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Период</label>
+                    <select name="complaint_date" class="form-select">
+                        <option value="">Все</option>
+                        <option value="today" {{ request('complaint_date') == 'today' ? 'selected' : '' }}>Сегодня</option>
+                        <option value="week" {{ request('complaint_date') == 'week' ? 'selected' : '' }}>За 7 дней</option>
+                        <option value="month" {{ request('complaint_date') == 'month' ? 'selected' : '' }}>За 30 дней</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Поиск (автор/причина)</label>
+                    <input type="text" name="complaint_search" class="form-control" placeholder="Имя пользователя или причина" value="{{ request('complaint_search') }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Фильтр</button>
+                </div>
+            </form>
+
             @forelse($complaints as $complaint)
                 <div class="card mb-3">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>Жалоба от <strong>{{ $complaint->user->name }}</strong> на {{ $complaint->complaintable_type == 'App\Models\Post' ? 'пост' : 'комментарий' }}</span>
+                    <span>Жалоба от <strong>{{ $complaint->user->name }}</strong> на
+                        @if($complaint->complaintable_type == 'App\Models\Post')
+                            пост:
+                            <a href="{{ route('forum.post', $complaint->complaintable_id) }}" target="_blank">
+                                {{ $complaint->complaintable->title ?? 'удалён' }}
+                            </a>
+                        @else
+                            комментарий
+                            @if($complaint->complaintable && $complaint->complaintable->commentable_type == 'App\Models\Post')
+                                к посту <a href="{{ route('forum.post', $complaint->complaintable->commentable_id) }}#comment-{{ $complaint->complaintable_id }}" target="_blank">
+                                    {{ $complaint->complaintable->commentable->title ?? 'пост' }}
+                                </a>
+                                <br><small>Автор комментария: {{ $complaint->complaintable->user->name ?? 'удалён' }}</small>
+                            @else
+                                (удалён)
+                            @endif
+                        @endif
+                    </span>
                         <span class="badge bg-{{ $complaint->status == 'reviewed' ? 'success' : ($complaint->status == 'rejected' ? 'danger' : 'warning') }}">
                         {{ $complaint->status == 'reviewed' ? 'Принята' : ($complaint->status == 'rejected' ? 'Отклонена' : 'На рассмотрении') }}
                     </span>
@@ -63,8 +109,28 @@
             {{ $complaints->links() }}
         </div>
 
-        {{-- Обращения в поддержку --}}
         <div class="tab-pane fade" id="support">
+            {{-- Форма фильтрации для обращений --}}
+            <form method="GET" action="{{ route('admin.moderation.index') }}" class="row g-2 mb-3 align-items-end">
+                <input type="hidden" name="tab" value="support">
+                <div class="col-md-3">
+                    <label class="form-label">Статус</label>
+                    <select name="support_status" class="form-select">
+                        <option value="">Все</option>
+                        <option value="new" {{ request('support_status') == 'new' ? 'selected' : '' }}>Новое</option>
+                        <option value="in_progress" {{ request('support_status') == 'in_progress' ? 'selected' : '' }}>В работе</option>
+                        <option value="closed" {{ request('support_status') == 'closed' ? 'selected' : '' }}>Закрыто</option>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label">Поиск (тема, сообщение, автор)</label>
+                    <input type="text" name="support_search" class="form-control" placeholder="Поиск..." value="{{ request('support_search') }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Фильтр</button>
+                </div>
+            </form>
+
             @forelse($supportRequests as $req)
                 <div class="card mb-3">
                     <div class="card-header d-flex justify-content-between">

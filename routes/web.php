@@ -31,7 +31,7 @@ Route::post('/ad/impression/{materialId}', [AdController::class, 'impression'])-
 Route::get('/faq', [KnowledgeBaseController::class, 'index'])->name('faq.index');
 Route::get('/faq/{knowledgeBase}', [KnowledgeBaseController::class, 'show'])->name('faq.show');
 Route::get('/search', [SearchController::class, 'index'])->name('search.results');
-Route::get('/search/suggestions', [SearchController::class, 'suggest'])->name('search.suggestions');
+Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
 
 // Авторизованные пользователи (все)
 Route::middleware(['auth'])->group(function () {
@@ -52,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/post/{post}', [PostController::class, 'destroy'])->name('forum.post.destroy');
     Route::post('/post/{id}/favorite', [PostController::class, 'toggleFavorite'])->name('post.favorite');
     Route::get('/favorites', [PostController::class, 'favorites'])->name('favorites.index');
+
 });
 
 // Единая админ-панель для администраторов и модераторов
