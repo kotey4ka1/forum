@@ -30,9 +30,11 @@
                 <h5 class="mb-3">Изображения</h5>
                 <div class="row g-3">
                     @foreach($post->images as $image)
-                        <div class="col-6 col-md-3">
-                            <a href="{{ asset('storage/app/public/' . $image->image_url) }}" target="_blank" class="d-block rounded overflow-hidden shadow-sm">
-                                <img src="{{ asset('storage/app/public/' . $image->image_url) }}" class="img-fluid w-100" style="height: 120px; object-fit: cover;">
+                        <div class="col-6 col-md-4 col-lg-3">
+                            <a href="{{ asset('storage/app/public/' . $image->image_url) }}" target="_blank" class="d-block">
+                                <img src="{{ asset('storage/app/public/' . $image->image_url) }}"
+                                     class="img-fluid rounded"
+                                     style="width: 100%; height: 250px; object-fit: contain; background-color: #f8f9fa;">
                             </a>
                         </div>
                     @endforeach

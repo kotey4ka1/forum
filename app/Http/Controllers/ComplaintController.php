@@ -29,4 +29,9 @@ class ComplaintController extends Controller
 
         return back()->with('success', 'Жалоба отправлена');
     }
+    
+    public function __construct()
+{
+    $this->middleware(['auth', 'verified']);
+}
 }

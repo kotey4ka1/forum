@@ -94,7 +94,7 @@
                     </div>
 
                     {{-- Реклама между постами: после каждого 5-го поста (кроме последнего) --}}
-                    @if(($index + 1) % 3 == 0 && !$loop->last)
+                    @if(($index + 1) % 9 == 0 && !$loop->last)
                         <div class="col-12">
                             @include('partials.ad-between-posts')
                         </div>

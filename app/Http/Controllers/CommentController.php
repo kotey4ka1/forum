@@ -78,4 +78,9 @@ class CommentController extends Controller
         }
         abort(403);
     }
+    
+    public function __construct()
+{
+    $this->middleware(['auth', 'verified'])->except(['edit', 'update', 'destroy']); // можно убрать except, тогда редактирование тоже требует верификации
+}
 }

@@ -18,8 +18,9 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SupportRequestController;
 use App\Http\Controllers\KnowledgeBaseController;
+use App\Http\Controllers\PasswordChangeConfirmController;
 
-Auth::routes();
+Auth::routes(['verify' => true]);
 
 // Публичные маршруты
 Route::get('/', [ForumController::class, 'index'])->name('home');
@@ -52,6 +53,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/post/{post}', [PostController::class, 'destroy'])->name('forum.post.destroy');
     Route::post('/post/{id}/favorite', [PostController::class, 'toggleFavorite'])->name('post.favorite');
     Route::get('/favorites', [PostController::class, 'favorites'])->name('favorites.index');
+    Route::get('/password/change/confirm/{token}', [PasswordChangeConfirmController::class, 'confirm'])
+    ->name('password.change.confirm');
+    Route::post('/profile/send-reset-link', [ProfileController::class, 'sendResetLink'])->name('profile.sendResetLink');
 
 });
 

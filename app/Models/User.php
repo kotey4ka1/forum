@@ -2,16 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Storage;
+use App\Notifications\CustomResetPassword;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'password', 'role_id', 'avatar', 'firstname', 'lastname'
+        'name', 'email', 'password', 'avatar', 'role_id', 'is_banned', 'last_seen_at'
+    ];
+
+    protected $hidden = [
+        'password', 'remember_token',
     ];
 
     protected $casts = [
@@ -27,17 +32,17 @@ class User extends Authenticatable
 
     public function posts()
     {
-        return $this->hasMany(Post::class, 'user_id');
+        return $this->hasMany(Post::class);
     }
 
     public function comments()
     {
-        return $this->hasMany(Comment::class, 'user_id');
+        return $this->hasMany(Comment::class);
     }
 
-    public function likes()
+    public function favorites()
     {
-        return $this->hasMany(Like::class, 'user_id');
+        return $this->belongsToMany(Post::class, 'favorites');
     }
 
     public function isAdmin()
@@ -50,24 +55,15 @@ class User extends Authenticatable
         return $this->role && $this->role->name === 'moderator';
     }
 
-    // Аксессор для безопасного вывода аватара
-    public function getAvatarUrlAttribute()
+    // Стандартный сброс пароля (через форму забыли пароль) – использует стандартное уведомление Laravel
+    public function sendPasswordResetNotification($token)
     {
-        if ($this->avatar && Storage::disk('public')->exists($this->avatar)) {
-            return asset('storage/' . $this->avatar);
-        }
-        return 'https://via.placeholder.com/150?text=No+Avatar';
+        $this->notify(new \Illuminate\Auth\Notifications\ResetPassword($token));
     }
 
-    public function getAvatarSmallAttribute()
+    // Специальный метод для смены пароля из профиля (отправляет кастомное уведомление с меткой source=profile)
+    public function sendPasswordResetNotificationFromProfile($token)
     {
-        if ($this->avatar && Storage::disk('public')->exists($this->avatar)) {
-            return asset('storage/' . $this->avatar);
-        }
-        return null;
-    }
-    public function favorites()
-    {
-        return $this->belongsToMany(Post::class, 'favorites');
+        $this->notify(new CustomResetPassword($token, $this->email, 'profile'));
     }
 }

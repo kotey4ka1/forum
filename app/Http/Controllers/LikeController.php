@@ -52,4 +52,9 @@ class LikeController extends Controller
             'likesCount' => $object->likes_count
         ]);
     }
+    
+    public function __construct()
+{
+    $this->middleware(['auth', 'verified']);
+}
 }

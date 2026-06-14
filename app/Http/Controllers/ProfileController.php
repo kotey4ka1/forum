@@ -8,9 +8,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class ProfileController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth']);
+    }
+
     // Просмотр профиля другого пользователя
     public function show($id)
     {
@@ -18,7 +25,6 @@ class ProfileController extends Controller
 
         $postsCount = $user->posts()->count();
         $commentsCount = $user->comments()->count();
-
         $likesGiven = Like::where('user_id', $user->id)->count();
 
         $postIds = $user->posts()->pluck('id');
@@ -48,43 +54,47 @@ class ProfileController extends Controller
         return view('profile.edit', compact('user'));
     }
 
-    // Обновление профиля
+    // Обновление профиля (только имя, email, аватар)
     public function update(Request $request)
     {
         $user = Auth::user();
 
-        $rules = [
+        $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ];
-
-        if ($request->filled('password')) {
-            $rules['password'] = 'required|string|min:8|confirmed';
-        }
-
-        $request->validate($rules);
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'avatar' => 'nullable|image|max:2048',
+        ]);
 
         $user->name = $request->name;
         $user->email = $request->email;
 
-        if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
-        }
-
         // Обработка аватара
         if ($request->hasFile('avatar')) {
-            // Удаляем старый аватар
             if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
                 Storage::disk('public')->delete($user->avatar);
             }
             $path = $request->file('avatar')->store('avatars', 'public');
-            $user->avatar = $path; // сохраняем относительный путь, например "avatars/filename.jpg"
+            $user->avatar = $path;
         }
 
         $user->save();
-
         return redirect()->route('profile.show', $user->id)->with('success', 'Профиль обновлён');
+    }
+
+    // Отправка ссылки для смены пароля (из профиля)
+    public function sendResetLink(Request $request)
+    {
+        $user = auth()->user();
+
+        $token = Str::random(60);
+        DB::table('password_resets')->updateOrInsert(
+            ['email' => $user->email],
+            ['email' => $user->email, 'token' => bcrypt($token), 'created_at' => now()]
+        );
+
+        $user->sendPasswordResetNotificationFromProfile($token);
+
+        return back()->with('success', 'Ссылка для сброса пароля отправлена на ваш email.');
     }
 
     // Блокировка / разблокировка пользователя (только для админа)

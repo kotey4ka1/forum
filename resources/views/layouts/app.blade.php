@@ -65,6 +65,21 @@
 
     <main class="flex-grow-1 py-4">
         <div class="container">
+            {{-- Flash-сообщения --}}
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                </div>
+            @endif
+
             @yield('content')
         </div>
     </main>
@@ -106,13 +121,11 @@
         const historyKey = 'forum_search_history';
         const maxHistory = 10;
 
-        // Получить историю из localStorage
         function getHistory() {
             const raw = localStorage.getItem(historyKey);
             return raw ? JSON.parse(raw) : [];
         }
 
-        // Добавить запрос в историю
         function addHistory(q) {
             if (!q.trim()) return;
             let h = getHistory();
@@ -122,7 +135,6 @@
             localStorage.setItem(historyKey, JSON.stringify(h));
         }
 
-        // Показать подсказки (история или AJAX)
         function showSuggestions(items, isHistory = false) {
             if (!items.length) {
                 box.style.display = 'none';
@@ -160,7 +172,6 @@
             box.style.display = 'block';
         }
 
-        // Запрос к серверу для подсказок
         async function fetchSuggestions(q) {
             if (!q.trim()) {
                 const history = getHistory().slice(0, 5);
@@ -183,7 +194,6 @@
             }
         }
 
-        // Обработчики
         input.addEventListener('input', function() {
             clearTimeout(timer);
             const val = this.value;

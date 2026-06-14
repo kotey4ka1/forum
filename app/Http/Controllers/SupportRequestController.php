@@ -53,4 +53,9 @@ class SupportRequestController extends Controller
         $supportRequest->delete();
         return redirect()->route('support.index')->with('success', 'Обращение удалено');
     }
+    
+    public function __construct()
+{
+    $this->middleware(['auth', 'verified'])->except(['index', 'show']);
+}
 }

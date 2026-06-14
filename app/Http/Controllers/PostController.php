@@ -159,6 +159,10 @@ class PostController extends Controller
         return redirect()->back()->with('success', 'Пост восстановлен.');
     }
 
+    public function __construct()
+{
+    $this->middleware(['auth', 'verified'])->except(['show']);
+}
 
 
 
