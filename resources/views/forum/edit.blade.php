@@ -22,6 +22,17 @@
                                 <textarea name="content" class="form-control" rows="8" required>{{ old('content', $post->content) }}</textarea>
                             </div>
 
+                            <!-- НОВЫЙ БЛОК: Артикулы (теги) -->
+                            <div class="mb-3">
+                                <label class="form-label">Артикулы (через запятую)</label>
+                                <input type="text" name="tags" class="form-control" value="{{ old('tags', $post->tags->pluck('name')->implode(', ')) }}" placeholder="Пример: куртка, пуховик, базовая модель">
+                                <small class="text-muted">Текущие артикулы:
+                                    @foreach($post->tags as $tag)
+                                        <span class="badge bg-secondary me-1">{{ $tag->name }}</span>
+                                    @endforeach
+                                </small>
+                            </div>
+
                             @if($post->images && $post->images->count())
                                 <div class="mb-3">
                                     <label class="form-label">Текущие изображения (можно отметить для удаления)</label>

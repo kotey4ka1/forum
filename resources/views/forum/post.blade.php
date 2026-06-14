@@ -7,6 +7,15 @@
         </div>
 
         <h1 class="mb-3">{{ $post->title }}</h1>
+        {{-- Артикулы (теги) --}}
+        @if($post->tags->count())
+            <div class="mb-3">
+                <strong>Артикулы:</strong>
+                @foreach($post->tags as $tag)
+                    <a href="{{ route('forum.tag', $tag->id) }}" class="badge bg-secondary text-decoration-none me-1">{{ $tag->name }}</a>
+                @endforeach
+            </div>
+        @endif
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 text-muted">
             <div><i class="bi bi-person"></i>
                 @if($post->user)

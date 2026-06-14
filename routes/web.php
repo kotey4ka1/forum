@@ -33,6 +33,7 @@ Route::get('/faq', [KnowledgeBaseController::class, 'index'])->name('faq.index')
 Route::get('/faq/{knowledgeBase}', [KnowledgeBaseController::class, 'show'])->name('faq.show');
 Route::get('/search', [SearchController::class, 'index'])->name('search.results');
 Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
+Route::get('/tag/{id}', [App\Http\Controllers\TagController::class, 'show'])->name('forum.tag');
 
 // Авторизованные пользователи (все)
 Route::middleware(['auth'])->group(function () {

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Tag;
 
 
 class PostController extends Controller
@@ -23,6 +24,7 @@ class PostController extends Controller
             'content' => 'required|string|min:10',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:4000',
             'images' => 'max:5',
+            'tags' => 'nullable|string',  // валидация для тегов
         ]);
 
         $post = Post::create([
@@ -35,11 +37,10 @@ class PostController extends Controller
             'likes_count' => 0,
         ]);
 
+        // Сохранение изображений
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                // Сохраняем в папку storage/app/public/post_images
                 $path = $image->store('post_images', 'public');
-                // $path будет, например, "post_images/filename.jpg"
                 PostImage::create([
                     'post_id' => $post->id,
                     'image_url' => $path,
@@ -47,6 +48,9 @@ class PostController extends Controller
                 ]);
             }
         }
+
+        // Синхронизация тегов
+        $this->syncTags($post, $request->input('tags'));
 
         return redirect()->route('forum.post', $post->id)->with('success', 'Пост создан');
     }
@@ -94,31 +98,34 @@ class PostController extends Controller
             'new_images' => 'max:5',
             'delete_images' => 'array',
             'delete_images.*' => 'exists:post_images,id',
+            'tags' => 'nullable|string',
         ]);
 
-        // Обновляем заголовок и текст
         $post->update($request->only('title', 'content'));
 
-        // Удаляем отмеченные изображения
+        // Удаление изображений
         if ($request->filled('delete_images')) {
-            $imagesToDelete = \App\Models\PostImage::whereIn('id', $request->delete_images)->get();
+            $imagesToDelete = PostImage::whereIn('id', $request->delete_images)->get();
             foreach ($imagesToDelete as $image) {
-                \Storage::disk('public')->delete($image->image_url);
+                Storage::disk('public')->delete($image->image_url);
                 $image->delete();
             }
         }
 
-        // Добавляем новые изображения
+        // Добавление новых изображений
         if ($request->hasFile('new_images')) {
             foreach ($request->file('new_images') as $image) {
                 $path = $image->store('post_images', 'public');
-                \App\Models\PostImage::create([
+                PostImage::create([
                     'post_id' => $post->id,
                     'image_url' => $path,
                     'sort_order' => 0,
                 ]);
             }
         }
+
+        // Синхронизация тегов
+        $this->syncTags($post, $request->input('tags'));
 
         return redirect()->route('forum.post', $post->id)->with('success', 'Пост обновлён');
     }
@@ -157,6 +164,19 @@ class PostController extends Controller
         }
         $post->restore();
         return redirect()->back()->with('success', 'Пост восстановлен.');
+    }
+    private function syncTags(Post $post, $tagsInput)
+    {
+        $tagIds = [];
+        if ($tagsInput) {
+            // Разделяем по запятой, удаляем лишние пробелы
+            $tagNames = array_map('trim', explode(',', $tagsInput));
+            foreach ($tagNames as $tagName) {
+                $tag = Tag::firstOrCreate(['name' => $tagName]);
+                $tagIds[] = $tag->id;
+            }
+        }
+        $post->tags()->sync($tagIds);
     }
 
     public function __construct()

@@ -24,6 +24,14 @@
                                 @error('content')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
 
+                            <!-- НОВЫЙ БЛОК: Артикулы (теги) -->
+                            <div class="mb-3">
+                                <label for="tags" class="form-label">Артикулы (через запятую)</label>
+                                <input type="text" class="form-control @error('tags') is-invalid @enderror" id="tags" name="tags" value="{{ old('tags') }}" placeholder="Пример: куртка, пуховик, базовая модель">
+                                @error('tags')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                <div class="form-text">Вы можете добавить несколько артикулов, разделяя их запятыми.</div>
+                            </div>
+
                             <div class="mb-3">
                                 <label for="images" class="form-label">Изображения (до 5 шт., jpg, png, gif, до 2 МБ каждый)</label>
                                 <input type="file" class="form-control @error('images.*') is-invalid @enderror" id="images" name="images[]" accept="image/*" multiple>
